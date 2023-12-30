@@ -66,7 +66,6 @@ psutil==5.9.0
 ptyprocess==0.7.0
 pycairo==1.20.1
 pycups==2.0.1
-pygame==2.1.2
 PyGObject==3.42.1
 PyJWT==2.3.0
 pymacaroons==0.13.0
