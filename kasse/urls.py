@@ -12,7 +12,8 @@ urlpatterns = [
     path('add_list/',views.add_list,name='addlist'),
     path('shopping/',views.shopping_list,name='list'),
     path('hist/',views.hist,name='history'),
-    path('shop/',views.basket,name='shop')
+    path('shop/',views.basket,name='shop'),
+     path('del/<int:id>',views.removit,name="delete")
     
     
     

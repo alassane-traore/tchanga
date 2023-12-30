@@ -91,16 +91,25 @@ def add_list(req):
   for o in s:
        nb=datetim.datetime(o.begin.year,o.begin.month,o.begin.day,o.begin.hour,59)
        nt=datetim.datetime(o.end.year,o.end.month,o.end.day,o.end.hour,59)
+       busk=Basket.objects.filter(sector=o)
+       costs=0
+       for b in busk:
+           costs+=b.costs
+           
        if nb<=nw and nt>=nw:
            cs.append(o)
            
        elif nt<nw and o.automate:
+          
            period=o.end-o.begin
            period=period.days
            nb=create_date(1,o.end)
            ne=create_date(period,nb)
+           rest = o.budget-costs
+           o.budget=o.budget+rest
            o.begin=nb
            o.end=ne
+           print("renewing", o.name,"lastdate:", o.end, "newDate:",nb )
            o.save()
            cs.append(o)
   if req.method=="POST":
@@ -120,6 +129,8 @@ def add_list(req):
   return render(req,"kasse/addliste.html",context={"li":gs,"cs":cs,"len":leng})
 
 
+
+
 def shopping_list(req):
     
     
@@ -135,7 +146,7 @@ def markets(req):
      id=req.POST["id"]
      
      s=Sector.objects.all().get(id=id)
-     print(id,":",s)
+    
      basks=Basket.objects.filter(sector=s)
      #print(basks)
      cost=0
@@ -164,7 +175,7 @@ def markets(req):
        nb=datetim.datetime(o.begin.year,o.begin.month,o.begin.day,o.begin.hour,59)
        nt=datetim.datetime(o.end.year,o.end.month,o.end.day,o.end.hour,59)
        basks=Basket.objects.filter(sector=o)
-       print(basks)
+       
        cost=0
        for i in basks:
           cost+=i.costs
@@ -198,19 +209,19 @@ def basket(req):
       
       goodn=post["goodnum"]
       goodn=int(goodn)
-      print("gn",goodn)
+      
       liste=[]
       for i in range(goodn+1):
         try:
           g=Goods.objects.get(id=post[f"good{i}"])
           if g is not None:
-             print("not none:",g)
+             
              g.s=s
              g.booked=True
              
              g.save()
              liste.append(g)
-             print(g)
+             
         except:
             pass
       baskt=Basket(author=req.user,d=nw,costs=eval(prise),comment=comment,sector=s)
@@ -235,10 +246,26 @@ def transit1(req):
       
 
 def count(req):
-    
-    
-    
-    return render(req,"kasse/counter.html")
+    sector=Sector.objects.filter(author=req.user)
+    bt=[]
+    totalcosts=0
+    for s in sector:
+     bu=s.buskets.all()
+     costs=0
+     s.b=bu
+     for b in bu:
+       costs+=b.costs
+       totalcosts+=b.costs
+       gu=b.kaufliste.all()
+       b.li=gu
+       b.len=len(gu)
+       for g in range(len(gu)):
+           if g==0:
+               gu[g].d=b.d
+               gu[g].costs="{:.2f}".format(b.costs)
+     s.costs= "{:.2f}".format(costs)
+    totalcosts= "{:.2f}".format(totalcosts)    
+    return render(req,"kasse/counter.html",context={"sector":sector,"b":bt,"total":totalcosts})
       
     
     
@@ -247,3 +274,9 @@ def hist(req):
     
     return render(req,"kasse/history.html")
 
+def removit(req,id):
+    ob=Goods.objects.get(id=id)
+    #delet =ob.task
+    print(ob)
+    ob.delete()
+    return redirect("addlist")

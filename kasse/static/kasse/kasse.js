@@ -13,7 +13,9 @@ beging = document.getElementById("begin"),
  givelist=document.getElementById("givelist"),
  pluslist=document.getElementById("pluslist"),
  checkSector=document.querySelectorAll(".checkSector"),
- sectionId=document.getElementById("sectionId")
+ sectionId=document.getElementById("sectionId"),
+ //deletlist=document.getElementById("del"),
+ anul=document.querySelectorAll(".anul")
 
 
  ev=new Event("click")
@@ -120,3 +122,24 @@ plus.addEventListener("click",()=>{
 
 })
 }
+
+async function toDelete(id){
+
+    fetch(`/del/${id}`)
+    .then(res =>{
+        res.text()
+    }).then(data=>console.log(data))
+     .catch(e=>{throw Error(`I was confronted with an error : ${e}`)})
+}
+
+//if (anul){
+    anul.forEach(el=>{
+        el.addEventListener("click",()=>{
+            
+            console.log(el.id)
+            toDelete(el.id)
+            location.reload()
+        })
+    })
+//}
+

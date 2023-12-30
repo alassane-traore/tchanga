@@ -12,7 +12,7 @@ from .models import Task,Kategories,dates,weecklines
 import pygame
 import os
 
-w_days=["Monday", "Tuesday", "Wednesday","Thursday","Friday","Saturday","Sunday"]
+w_days=["Monday", "Tuesday", "Wednesday","Thursday","Friday","Saturday","Sunday" ]
 
 my_time=datetim.datetime.now().weekday()
 my_time = str(datetim.datetime.now().date()) +","+ w_days[my_time]
@@ -21,15 +21,16 @@ birds =["plan/static/plan/Bird_Ringtone(256k).mp3",
         "plan/static/plan/Birds_Ringtone____Sweet_Voice____New_Ringtones_2020____Ringtones_2.O___(256k).mp3",
         "plan/static/plan/Bird_Voice_-_Ringtone_[With_Free_Download_Link](256k).mp3"
         ]
-mybird=os.path.join(base_dir,birds[0])
+mybird=os.path.join(base_dir,birds[2])
 
 last_tone=""
 
 def give_tone(req):
     global last_tone
+    nw=last_tone
     pygame.mixer.init()
     pygame.mixer.music.load(mybird)
-    if last_tone==""or datetim.datetime.now().minute-last_tone.minute >=3 :
+    if last_tone==""or datetim.datetime.now() > datetim.datetime(nw.year,nw.month,nw.day,nw.hour,nw.minute+2,nw.second):
       pygame.mixer.music.play()
     
       while pygame.mixer.music.get_busy():
@@ -68,8 +69,6 @@ def new_time(req):
         print("hhhhiiii")
         HttpResponseRedirect(reverse("add"))  
   
-
-
 def add(req):
     k=Kategories.objects.all().filter(author=req.user)
     d=datetim.datetime.now()
@@ -109,9 +108,6 @@ def add(req):
     #else: 
      #return render(req,'plan/add.html',context={"t":my_time,"k":k,"l":lines})
 
-
-
-
 def add_week(req):
     if req.method=="POST":
         dt=req.POST["week"].split("T")[0]
@@ -130,7 +126,6 @@ def add_week(req):
         
       
     return render(req,'plan/weeklines.html',context={"t":my_time})
-
 
 def transit(req):
     
@@ -170,7 +165,6 @@ def ordi(taff1):
             taff.remove(i)              
       taff=taff3
     return taff
-
 
 def days(req):
     #tm=datetime.utcnow()
@@ -212,11 +206,6 @@ def days(req):
       
     return render(req,'plan/today.html',context={"t":my_time,"taff":taff})
 
-
-
-     
-
-
 def week(req):
     today=datetim.datetime.now()
     current_Week=find_week(f"{today.year}-{today.month}-{today.day}")
@@ -235,6 +224,7 @@ def week(req):
           da.append(str(i.date))  
         
     da.sort()
+    da=da[::-1]
     wee1=[]
     taff0=[]
     w=[]
@@ -271,9 +261,11 @@ def week(req):
                 ob["date1"]=o.date
             w.append(ob)    
     w1=[]
+    v=[]
     for ob in w:
-        if not ob in w1:
+        if not ob["id"] in v:
             w1.append(ob)
+            v.append(ob["id"])
     if not req.user.is_authenticated:
         rev=reverse('login')
         return redirect(rev) 
@@ -287,14 +279,19 @@ def months(req):
     for el in fmo:
         if el.date:
           date=datetime.strptime(f"{el.date.year}-{el.date.month}-{el.date.day}",'%Y-%m-%d')
-          if date.month == mo:
+          if date.month == mo and not el in moar:
              moar.append(el)
     da=[]
     for i in moar:
-        if not str(i.date) in da:
-          da.append(str(i.date))  
+        d=datetim.datetime(i.date.year,i.date.month,i.date.day)
+       # print("d:",d)
+        if not d in da:
+          da.append(d)  
         
     da.sort()
+    
+    da=da[::-1]
+    
     wee1=[]
     taff0=[]
     m=[]
@@ -302,18 +299,24 @@ def months(req):
     for i in da:
         one=[]
         for el in moar:
-            if str(el.date) ==i: 
+            d=datetim.datetime(el.date.year,el.date.month,el.date.day)
+            if d ==i: 
                 wee1.append(el)
         for el in wee1:
-          if str(el.date) ==i:
-            one.append(str(el.begin))
+          d=datetim.datetime(el.date.year,el.date.month,el.date.day)
+          if d ==i:
+            one.append(el.begin)
         one.sort()
+        #print(one)
         taff0.append(one)
     
         for ar in taff0:
          for el1 in ar:
           for o in wee1:
-           if str(o.begin)==el1 and str(o.date)==i :
+           d=datetim.datetime(o.date.year,o.date.month,o.date.day)
+           
+           if el1==o.begin and d==i :
+           # print(d,":",el1)
             ob={}
             ob["begin"]=str(o.begin)[:-3]
             ob["end"]=str(o.end)[:-3]
@@ -322,20 +325,23 @@ def months(req):
             
             ob["author"]=o.author
             ob["id"]=o.id
-            if not o.date in verifier:
-                verifier.append(o.date)
+            if not d in verifier:
+                verifier.append(d)
                 ob["date"]=o.date
             else:
                 ob["date1"]=o.date
             m.append(ob) 
     m1=[]
+    v=[]
     for ob in m:
-        if not ob in m1:
+        if not ob["id"] in v:
             m1.append(ob)
+            v.append(ob["id"])
+            
     if not req.user.is_authenticated:
         rev=reverse('login')
         return redirect(rev) 
-        
+   
     return render(req,'plan/month.html',context={"t":my_time,"mo":m1})
 
 def types(req):
@@ -352,7 +358,6 @@ def types(req):
         return redirect(rev)  
            
     return render(req,'plan/types.html',context={"t":my_time})
-
 
 def give_to_update_object(req,id):
     
